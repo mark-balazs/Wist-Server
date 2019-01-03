@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.text.Font?>
+
+<TabPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="720.0" prefWidth="1024.0" tabClosingPolicy="UNAVAILABLE" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.Server">
+  <tabs>
+    <Tab text="New Game">
+      <content>
+        <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" style="-fx-background-color: #4d4dff;">
+               <children>
+                  <Button fx:id="startServerButton" layoutX="583.0" layoutY="95.0" mnemonicParsing="false" onMouseClicked="#startServerButtonClicked" prefHeight="61.0" prefWidth="123.0" text="Start Server">
+                     <font>
+                        <Font name="Lucida Fax Regular" size="14.0" />
+                     </font>
+                  </Button>
+                  <ListView fx:id="playersConnectedList" layoutX="242.0" layoutY="255.0" prefHeight="200.0" prefWidth="540.0" />
+                  <Button fx:id="startGameButton" disable="true" layoutX="379.0" layoutY="542.0" mnemonicParsing="false" onMouseClicked="#startGameButtonClicked" prefHeight="74.0" prefWidth="265.0" text="Start Game">
+                     <font>
+                        <Font name="Lucida Fax Regular" size="15.0" />
+                     </font>
+                  </Button>
+                  <Button fx:id="cancelGameButton" layoutX="782.0" layoutY="557.0" mnemonicParsing="false" prefHeight="44.0" prefWidth="104.0" text="Cancel">
+                     <font>
+                        <Font name="Lucida Fax Regular" size="13.0" />
+                     </font>
+                  </Button>
+                  <Label layoutX="242.0" layoutY="238.0" text="Players Connected" textFill="WHITE">
+                     <font>
+                        <Font name="Lucida Fax Regular" size="13.0" />
+                     </font>
+                  </Label>
+                  <TextField fx:id="numberOfPlayersField" layoutX="242.0" layoutY="131.0" />
+                  <Label layoutX="242.0" layoutY="110.0" text="Number of Players" textFill="WHITE">
+                     <font>
+                        <Font name="Lucida Fax Regular" size="13.0" />
+                     </font>
+                  </Label>
+               </children></AnchorPane>
+      </content>
+    </Tab>
+    <Tab text="Match">
+         <content>
+            <SplitPane dividerPositions="0.3342981186685962, 0.6671490593342981" orientation="VERTICAL" prefHeight="200.0" prefWidth="160.0">
+              <items>
+                  <HBox fx:id="enemyBox" prefHeight="231.0" prefWidth="1024.0" />
+                  <HBox fx:id="placedCardBox" prefHeight="232.0" prefWidth="1024.0" />
+                  <HBox fx:id="cardBox" alignment="CENTER" prefHeight="239.0" prefWidth="1024.0" spacing="8.0" />
+              </items>
+            </SplitPane>
+         </content>
+    </Tab>
+  </tabs>
+</TabPane>
