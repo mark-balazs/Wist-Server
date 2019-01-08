@@ -1,27 +1,17 @@
 package application;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Stack;
-
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.HBox;
+import javafx.stage.Stage;
 import javafx.util.Pair;
 
 public class Controller {
-    @FXML
-    protected HBox cardBox;
-    @FXML
-    protected HBox enemyBox;
-    @FXML
-    protected HBox placedCardBox;
     @FXML
     protected ListView<String> playersConnectedList;
     @FXML
@@ -32,88 +22,112 @@ public class Controller {
     protected Button startGameButton;
     @FXML
     protected Button cancelGameButton;
+    @FXML
+    protected TabPane tabPane;
 
-    protected List<Integer> turnOrder;
-
-    protected boolean inPredictionPhase = false;
-    protected boolean inRealPhase = false;
-    protected boolean inGame = false;
-    protected boolean inWaitingStage = false;
+    protected Stage stage;
 
     protected Round currentRound = new Round();
-    protected Stack<Round> roundRepo = new Stack<>();
-
-    @FXML
-    protected void cancelGameButtonClicked(MouseEvent me) {
-
-    }
+    // protected Stack<Round> roundRepo = new Stack<>();
 
     protected void alert(String message) {
-	Alert alert = new Alert(AlertType.INFORMATION);
-	alert.setTitle("Game Information");
-	alert.setHeaderText(null);
-	alert.setContentText(message);
-	alert.show();
+	Platform.runLater(new Runnable() {
+
+	    @Override
+	    public void run() {
+		Alert alert = new Alert(AlertType.INFORMATION);
+		alert.setTitle("Game Information");
+		alert.setHeaderText(null);
+		alert.setContentText(message);
+		alert.show();
+	    }
+	});
+
     }
 
     protected void nextStep(int currentAnswer) {
-	if (inPredictionPhase) {
-	    currentRound.getPlayers().get(turnOrder.get(currentRound.getTurn())).setPrediction(currentAnswer);
-	    currentRound.setTurn((currentRound.getTurn() + 1) % currentRound.getNumberOfPlayers());
-	    currentRound.setTurnCounter((currentRound.getTurnCounter() + 1) % currentRound.getNumberOfPlayers());
-	    if (currentRound.getTurnCounter() == 0) {
-		inPredictionPhase = false;
-		inRealPhase = true;
+	Thread thread = new Thread(new Runnable() {
+
+	    @Override
+	    public void run() {
+		if (currentRound.isPredictionPhase()) {
+		    inPredictionPhase(currentAnswer);
+		} else if (currentRound.isPickPhase()) {
+		    inPickPhase(currentAnswer);
+		}
 	    }
-	} else if (inRealPhase) {
-	    if (placedCardBox.getChildren().size() == 0) {
-		currentRound.getMinorRound().setFirstCardColor(currentRound.getPlayers()
-			.get(turnOrder.get(currentRound.getTurn())).getCards().get(currentAnswer).getColor());
-	    }
-	    placedCardBox.getChildren().add(
-		    currentRound.getPlayers().get(turnOrder.get(currentRound.getTurn())).getCards().get(currentAnswer));
-	    currentRound.getMinorRound().getPlayedCards()
-		    .add(new Pair<Player, Card>(currentRound.getPlayers().get(turnOrder.get(currentRound.getTurn())),
-			    currentRound.getPlayers().get(turnOrder.get(currentRound.getTurn())).getCards()
-				    .get(currentAnswer)));
-	    currentRound.getPlayers().get(turnOrder.get(currentRound.getTurn())).getCards().remove(currentAnswer);
-	    currentRound.setTurn((currentRound.getTurn() + 1) % currentRound.getNumberOfPlayers());
-	    currentRound.setTurnCounter((currentRound.getTurnCounter() + 1) % currentRound.getNumberOfPlayers());
-	    if (currentRound.getTurnCounter() == 0) {
-		currentRound.getPlayers().get(currentRound.getPlayers().indexOf(currentRound.getMinorRound().winner()))
-			.setReality(currentRound.getPlayers()
-				.get(currentRound.getPlayers().indexOf(currentRound.getMinorRound().winner()))
-				.getReality() + 1);
-		currentRound.setTurn(turnOrder
-			.indexOf((Integer) currentRound.getPlayers().indexOf(currentRound.getMinorRound().winner())));
-		placedCardBox.getChildren().clear();
-		currentRound.getMinorRound().getPlayedCards().clear();
-		currentRound.getMinorRound().setFirstCardColor(-1);
-		currentRound.setMinorTurn((currentRound.getMinorTurn() + 1) % currentRound.getNumberOfCards());
-	    }
-	    if (currentRound.getMinorTurn() == 0) {
-		inPredictionPhase = true;
-		inRealPhase = false;
-		currentRound.setScores();
-		currentRound.nextRound();
-		currentRound.setTurn((currentRound.getTurn() + 1) % currentRound.getNumberOfPlayers());
-	    }
+	});
+	thread.setDaemon(true);
+	thread.start();
+    }
+
+    protected void inPredictionPhase(int currentAnswer) {
+	System.out.println("In prediction phase, answer is: " + currentAnswer);
+	currentRound.getPlayers().get(currentRound.getTurn()).setPrediction(currentAnswer);
+	currentRound.setTurn((currentRound.getTurn() + 1) % currentRound.getNumberOfPlayers());
+	currentRound.setTurnCounter((currentRound.getTurnCounter() + 1) % currentRound.getNumberOfPlayers());
+	if (currentRound.getTurnCounter() == 0) {
+	    System.out.println("Round ended");
+	    currentRound.setPredictionPhase(false);
+	    currentRound.setPickPhase(true);
+	}
+	System.out.println("Turn: " + currentRound.getTurn());
+	System.out.println("TurnCounter: " + currentRound.getTurnCounter());
+    }
+
+    protected void inPickPhase(int currentAnswer) {
+	if (currentRound.getMinorRound().getPlayedCards().isEmpty()) {
+	    currentRound.getMinorRound().setFirstCardColor(
+		    currentRound.getPlayers().get(currentRound.getTurn()).getCards().get(currentAnswer).getColor());
+	}
+	System.out.println("In pick phase, answer: " + currentAnswer);
+	currentRound.getMinorRound().getPlayedCards()
+		.add(new Pair<Player, Card>(currentRound.getPlayers().get(currentRound.getTurn()),
+			currentRound.getPlayers().get(currentRound.getTurn()).getCards().get(currentAnswer)));
+	System.out.println("Card added");
+	currentRound.getPlayers().get(currentRound.getTurn()).getCards().remove(currentAnswer);
+	System.out
+		.println("Card removed from player " + currentRound.getPlayers().get(currentRound.getTurn()).getName());
+	currentRound.setTurn((currentRound.getTurn() + 1) % currentRound.getNumberOfPlayers());
+	currentRound.setTurnCounter((currentRound.getTurnCounter() + 1) % currentRound.getNumberOfPlayers());
+	if (currentRound.getTurnCounter() == 0) {
+	    minorRoundOver();
+	}
+	System.out.println("Turn: " + currentRound.getTurn());
+	System.out.println("TurnCounter: " + currentRound.getTurnCounter());
+    }
+
+    protected void minorRoundOver() {
+	System.out.println("Minor round ended");
+	currentRound.setWaitingStage(true);
+	for (Player p : currentRound.getPlayers()) {
+	    p.setWaitingChecked(false);
 	}
     }
 
-    @FXML
-    protected void startGameButtonClicked(MouseEvent me) {
-	turnOrder = new ArrayList<Integer>();
-	for (int i = 0; i < currentRound.getNumberOfPlayers(); i++) {
-	    turnOrder.add(i);
+    protected void roundOver() {
+	System.out.println("Round ended");
+	currentRound.setPredictionPhase(true);
+	currentRound.setPickPhase(false);
+	System.out.println("Setting scores");
+	currentRound.setScores();
+	System.out.println("Starting next round");
+	if (currentRound.getRoundNumber() < 3 * currentRound.getNumberOfPlayers() + 11) {
+	    currentRound.nextRound();
+	    currentRound.setRoundNumber(123);
+	    currentRound.setDealer((currentRound.getDealer() + 1) % currentRound.getNumberOfPlayers());
+	    currentRound.setTurn((currentRound.getDealer() + 1) % currentRound.getNumberOfPlayers());
+	} else {
+	    currentRound.setRoundNumber(currentRound.getRoundNumber() + 1);
+	    currentRound.setWaitingStage(true);
 	}
-	Collections.shuffle(turnOrder);
-	currentRound.setTurn(0);
-	inPredictionPhase = true;
-	Player player = new Player();
-	player.setName("House");
-	player.setPlayerNumber(currentRound.getNumberOfPlayers() - 1);
-	currentRound.getPlayers().add(player);
-	currentRound.nextRound();
     }
+    public void setStage(Stage stage) {
+	this.stage = stage;
+    }
+
+    public Stage getStage() {
+	return stage;
+    }
+
 }

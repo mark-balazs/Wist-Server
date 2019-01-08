@@ -11,9 +11,9 @@ public class ClientInfo {
     private ObjectOutputStream output;
 
     public void close() throws IOException {
-	connection.close();
 	input.close();
 	output.close();
+	connection.close();
     }
 
     public Socket getConnection() {

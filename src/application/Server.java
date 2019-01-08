@@ -1,7 +1,9 @@
 package application;
 
+import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
+import javafx.scene.control.SelectionModel;
+import javafx.scene.control.Tab;
 import javafx.scene.input.MouseEvent;
 
 import java.io.IOException;
@@ -10,16 +12,18 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
-import java.net.URL;
-import java.util.ResourceBundle;
 
-public class Server extends Controller implements Initializable {
+public class Server extends Controller {
     protected ServerSocket server;
+    protected boolean inGame = false;
 
     @FXML
     private void startServerButtonClicked(MouseEvent me) {
 	if (numberOfPlayersField.getText().matches("[2-6]")) {
 	    setupServer();
+	    currentRound.setDealer(0);
+	    currentRound.setTurn((currentRound.getDealer() + 1) % currentRound.getNumberOfPlayers());
+	    currentRound.setPredictionPhase(true);
 	    waitForConnections();
 	    startServerButton.setDisable(true);
 	    numberOfPlayersField.setDisable(true);
@@ -29,9 +33,18 @@ public class Server extends Controller implements Initializable {
 	}
     }
 
+    @FXML
+    protected void startGameButtonClicked(MouseEvent me) {
+	inGame = true;
+	currentRound.nextRound();
+	SelectionModel<Tab> selectionModel = tabPane.getSelectionModel();
+	tabPane.getTabs().get(0).setDisable(true);
+	selectionModel.select(1);
+    }
+
     private void setupServer() {
 	try {
-	    server = new ServerSocket(6968, 4);
+	    server = new ServerSocket(4444, 5);
 	} catch (IOException e) {
 	    e.printStackTrace();
 	}
@@ -44,7 +57,7 @@ public class Server extends Controller implements Initializable {
 
 	    @Override
 	    public void run() {
-		for (int i = 0; i < currentRound.getNumberOfPlayers() - 1; i++) {
+		for (int i = 0; i < currentRound.getNumberOfPlayers(); i++) {
 		    try {
 			Socket connection = server.accept();
 			setupStreams(connection, i);
@@ -57,11 +70,12 @@ public class Server extends Controller implements Initializable {
 		startGameButton.setDisable(false);
 	    }
 	});
+	thread.setDaemon(true);
 	thread.start();
     }
 
     private void setupStreams(final Socket connection, final int index) {
-	Thread thread = new Thread(new Runnable() {
+	Platform.runLater(new Runnable() {
 	    @Override
 	    public void run() {
 		try {
@@ -73,41 +87,38 @@ public class Server extends Controller implements Initializable {
 		    info.setInput(in);
 		    info.setOutput(out);
 		    Player player = new Player();
-		    player.setName(connection.getInetAddress().getHostName());
 		    player.setClientInfo(info);
 		    player.setPlayerNumber(index);
 		    currentRound.getPlayers().add(player);
-		    createClientInputThread(currentRound.getPlayers().get(currentRound.getPlayers().size() - 1));
-		    createClientOutputThread(currentRound.getPlayers().get(currentRound.getPlayers().size() - 1));
-		    playersConnectedList.getItems().add(player.getName());
+		    createClientInputThread(currentRound.getPlayers().get(currentRound.getPlayers().size() - 1),
+			    currentRound.getPlayers().size() - 1);
+		    createClientOutputThread(currentRound.getPlayers().get(currentRound.getPlayers().size() - 1),
+			    currentRound.getPlayers().size() - 1);
+		    playersConnectedList.getItems().add(connection.getInetAddress().getHostName());
 		} catch (IOException ioException) {
 		    ioException.printStackTrace();
 		}
 	    }
 	});
-	thread.start();
     }
 
-    private void createClientOutputThread(Player player) {
-	// TODO: 1-card rounds work differently
+    private void createClientOutputThread(Player player, int playerIndex) {
 	Thread thread = new Thread(new Runnable() {
 
 	    @Override
 	    public void run() {
-		while (!inPredictionPhase && !inRealPhase) {
-
-		}
 		try {
-		    player.getClientInfo().getOutput().writeObject(currentRound.getPlayers().indexOf(player));
+		    player.getClientInfo().getOutput().writeObject(playerIndex);
 		    player.getClientInfo().getOutput().flush();
-		} catch (IOException ioException) {
-		    ioException.printStackTrace();
-		}
-		while (true) {
-		    try {
 
-			Thread.sleep(50);
-			player.getClientInfo().getOutput().writeObject(currentRound);
+		} catch (Exception e) {
+		    e.printStackTrace();
+		}
+
+		while (!player.getClientInfo().getConnection().isClosed()) {
+		    try {
+			Thread.sleep(500);
+			player.getClientInfo().getOutput().writeObject(currentRound.createClientPackage(playerIndex));
 			player.getClientInfo().getOutput().flush();
 		    } catch (InterruptedException interruptedException) {
 			interruptedException.printStackTrace();
@@ -117,53 +128,37 @@ public class Server extends Controller implements Initializable {
 		}
 	    }
 	});
+	thread.setDaemon(true);
 	thread.start();
+
     }
 
-    private void createClientInputThread(Player player) {
+    private void createClientInputThread(Player player, int playerIndex) {
 	Thread thread = new Thread(new Runnable() {
 
 	    @Override
 	    public void run() {
 		try {
-		    String name = (String) player.getClientInfo().getInput().readObject();
+		    String name = player.getClientInfo().getInput().readObject().toString();
 		    player.setName(name);
 
 		    while (!player.getClientInfo().getConnection().isClosed()) {
-			int answer = (Integer) player.getClientInfo().getInput().readObject();
-			if (turnOrder.get(currentRound.getTurn()) == player.getPlayerNumber()) {
-			    if (inRealPhase) {
-				if (currentRound.getTurnCounter() != 0) {
-				    if (player.hasColor(currentRound.getMinorRound().getFirstCardColor())
-					    && player.getCards().get(answer).getColor() != currentRound.getMinorRound()
-						    .getFirstCardColor()) {
-
-				    } else if (!player.hasColor(currentRound.getMinorRound().getFirstCardColor())
-					    && player.hasColor(currentRound.getTromph())
-					    && player.getCards().get(answer).getColor() != currentRound.getTromph()) {
-
-				    } else {
-					nextStep(answer);
-				    }
-				}
-			    } else if (inPredictionPhase) {
-				if (currentRound.getTurnCounter() == currentRound.getNumberOfPlayers() - 1) {
-				    int sum = 0;
-				    for (Player p : currentRound.getPlayers()) {
-					sum += p.getPrediction();
-				    }
-				    if (answer == currentRound.getNumberOfCards() - sum) {
-
-				    } else {
-					nextStep(answer);
-				    }
-				}
+			System.out.println("Waiting for " + currentRound.getTurn());
+			Integer answer = (Integer) player.getClientInfo().getInput().readObject();
+			System.out.println(player.getPlayerNumber() + " " + playerIndex + " sent " + answer);
+			if (currentRound.getTurn() == player.getPlayerNumber() && !currentRound.isWaitingStage()) {
+			    if (currentRound.isPickPhase()) {
+				processPickPhaseInput(player, answer);
+			    } else if (currentRound.isPredictionPhase()) {
+				processPredictionPhaseInput(player, answer);
 			    }
 
+			} else if (currentRound.isWaitingStage() && !player.isWaitingChecked()) {
+			    inWaitingStage(playerIndex);
 			}
 		    }
 		} catch (ClassNotFoundException classNotFoundException) {
-
+		    classNotFoundException.printStackTrace();
 		} catch (IOException ioException) {
 		    ioException.printStackTrace();
 		} finally {
@@ -171,10 +166,35 @@ public class Server extends Controller implements Initializable {
 		}
 	    }
 	});
+	thread.setDaemon(true);
 	thread.start();
     }
 
-    private void closeServer() {
+    protected void processPickPhaseInput(Player player, int answer) {
+	if (currentRound.getTurnCounter() != 0) {
+	    if (player.hasColor(currentRound.getMinorRound().getFirstCardColor())
+		    && player.getCards().get(answer).getColor() != currentRound.getMinorRound().getFirstCardColor()) {
+
+	    } else if (!player.hasColor(currentRound.getMinorRound().getFirstCardColor())
+		    && player.hasColor(currentRound.getTromph().getColor())
+		    && player.getCards().get(answer).getColor() != currentRound.getTromph().getColor()) {
+
+	    } else {
+		System.out.println("Next step...");
+		nextStep(answer);
+	    }
+	} else {
+	    System.out.println("Next step...");
+	    nextStep(answer);
+	}
+    }
+
+    protected void processPredictionPhaseInput(Player player, int answer) {
+	System.out.println("Next step...");
+	nextStep(answer);
+    }
+
+    public void closeServer() {
 	try {
 	    for (Player p : currentRound.getPlayers()) {
 		p.getClientInfo().close();
@@ -185,9 +205,38 @@ public class Server extends Controller implements Initializable {
 	}
     }
 
-    @Override
-    public void initialize(URL arg0, ResourceBundle arg1) {
+    protected void waitingStageOver() {
+	if (currentRound.getRoundNumber() < 3 * currentRound.getNumberOfPlayers() + 12) {
+	    currentRound.getPlayers().get(currentRound.getMinorRound().winner())
+		    .setWon(currentRound.getPlayers().get(currentRound.getMinorRound().winner()).getWon() + 1);
+	    currentRound.setTurn(currentRound.getMinorRound().winner());
+	    currentRound.getMinorRound().getPlayedCards().clear();
+	    currentRound.getMinorRound().setFirstCardColor(-1);
+	    currentRound.setMinorTurn((currentRound.getMinorTurn() + 1) % currentRound.getNumberOfCards());
+	    if (currentRound.getMinorTurn() == 0 && currentRound.getTurnCounter() == 0) {
+		roundOver();
+	    }
+	} else {
+	    closeServer();
+	    stage.close();
+	}
+    }
 
+    protected void inWaitingStage(int playerIndex) {
+	currentRound.getPlayers().get(playerIndex).setWaitingChecked(true);
+	System.out.println("In waiting stage");
+	System.out.println("Player done: " + playerIndex);
+	if (currentRound.isAllWaitingsChecked()) {
+	    currentRound.setWaitingStage(false);
+	    System.out.println("All players done, exiting waiting phase");
+	    waitingStageOver();
+	}
+    }
+
+    @FXML
+    protected void cancelGameButtonClicked(MouseEvent me) {
+	closeServer();
+	stage.close();
     }
 
 }

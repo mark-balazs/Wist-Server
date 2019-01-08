@@ -5,17 +5,18 @@ import java.util.ArrayList;
 public class Player {
     private ArrayList<Card> cards = new ArrayList<>();
     private String name;
-    private int playerNumber;
+    private int playerIndex;
     private int score;
     private int prediction;
-    private int reality;
+    private int won;
     private int streak;
     private ClientInfo clientInfo = new ClientInfo();
+    private boolean isWaitingChecked = false;
 
     public Player() {
 	score = 0;
 	prediction = 0;
-	reality = 0;
+	won = 0;
 	streak = 0;
     }
 
@@ -43,12 +44,12 @@ public class Player {
 	this.prediction = expectation;
     }
 
-    public int getReality() {
-	return reality;
+    public int getWon() {
+	return won;
     }
 
-    public void setReality(int reality) {
-	this.reality = reality;
+    public void setWon(int reality) {
+	this.won = reality;
     }
 
     public int getStreak() {
@@ -76,11 +77,11 @@ public class Player {
     }
 
     public int getPlayerNumber() {
-	return playerNumber;
+	return playerIndex;
     }
 
     public void setPlayerNumber(int playerNumber) {
-	this.playerNumber = playerNumber;
+	this.playerIndex = playerNumber;
     }
 
     public boolean hasColor(int color) {
@@ -90,6 +91,14 @@ public class Player {
 	    }
 	}
 	return false;
+    }
+
+    public boolean isWaitingChecked() {
+	return isWaitingChecked;
+    }
+
+    public void setWaitingChecked(boolean isWaitingChecked) {
+	this.isWaitingChecked = isWaitingChecked;
     }
 
 }

@@ -8,12 +8,16 @@ public class Card extends ImageView {
     private int number;
     private int color;
 
-    public Card() {
-	Image image = new Image("images/sample.jpg");
-	// Image image = new Image("images/" + number + color + ".png");
+    public Card(int number, int color) {
+	this.number = number;
+	this.color = color;
+	// Image image = new Image("images/00.jpg");
+	if (number != -1) {
+	    Image image = new Image("images/" + number + color + ".jpg");
 
-	setImage(image);
-	setStyle("-fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.8), 10, 0, 0, 0);");
+	    setImage(image);
+	    setStyle("-fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.8), 10, 0, 0, 0);");
+	}
     }
 
     public int getNumber() {
