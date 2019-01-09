@@ -114,7 +114,6 @@ public class Controller {
 	System.out.println("Starting next round");
 	if (currentRound.getRoundNumber() < 3 * currentRound.getNumberOfPlayers() + 11) {
 	    currentRound.nextRound();
-	    currentRound.setRoundNumber(123);
 	    currentRound.setDealer((currentRound.getDealer() + 1) % currentRound.getNumberOfPlayers());
 	    currentRound.setTurn((currentRound.getDealer() + 1) % currentRound.getNumberOfPlayers());
 	} else {
