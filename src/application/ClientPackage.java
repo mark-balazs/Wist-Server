@@ -22,6 +22,7 @@ public class ClientPackage implements Serializable {
     private int numberOfPlayers;
     private int numberOfCards;
     private int dealerNumber;
+    private int minorRoundWinner;
     
     private boolean isPredictionPhase;
     private boolean isWaitingPhase;
@@ -160,5 +161,13 @@ public class ClientPackage implements Serializable {
 
     public void setWinners(ArrayList<String> winners) {
 	this.winners = winners;
+    }
+
+    public int getMinorRoundWinner() {
+	return minorRoundWinner;
+    }
+
+    public void setMinorRoundWinner(int minorRoundWinner) {
+	this.minorRoundWinner = minorRoundWinner;
     }
 }

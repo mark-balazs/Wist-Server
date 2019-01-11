@@ -122,9 +122,11 @@ public class Server extends Controller {
 			player.getClientInfo().getOutput().flush();
 		    } catch (InterruptedException interruptedException) {
 			interruptedException.printStackTrace();
+		    } catch (SocketException socketException) {
+			socketException.printStackTrace();
 		    } catch (IOException ioException) {
 			ioException.printStackTrace();
-		    }
+		    } 
 		}
 	    }
 	});
@@ -143,9 +145,7 @@ public class Server extends Controller {
 		    player.setName(name);
 
 		    while (!player.getClientInfo().getConnection().isClosed()) {
-			System.out.println("Waiting for " + currentRound.getTurn());
 			Integer answer = (Integer) player.getClientInfo().getInput().readObject();
-			System.out.println(player.getPlayerNumber() + " " + playerIndex + " sent " + answer);
 			if (currentRound.getTurn() == player.getPlayerNumber() && !currentRound.isWaitingStage()) {
 			    if (currentRound.isPickPhase()) {
 				processPickPhaseInput(player, answer);
@@ -161,6 +161,8 @@ public class Server extends Controller {
 		    classNotFoundException.printStackTrace();
 		} catch (IOException ioException) {
 		    ioException.printStackTrace();
+		} catch (Exception e) {
+		    
 		} finally {
 		    closeServer();
 		}
@@ -180,17 +182,14 @@ public class Server extends Controller {
 		    && player.getCards().get(answer).getColor() != currentRound.getTromph().getColor()) {
 
 	    } else {
-		System.out.println("Next step...");
 		nextStep(answer);
 	    }
 	} else {
-	    System.out.println("Next step...");
 	    nextStep(answer);
 	}
     }
 
     protected void processPredictionPhaseInput(Player player, int answer) {
-	System.out.println("Next step...");
 	nextStep(answer);
     }
 
@@ -224,11 +223,8 @@ public class Server extends Controller {
 
     protected void inWaitingStage(int playerIndex) {
 	currentRound.getPlayers().get(playerIndex).setWaitingChecked(true);
-	System.out.println("In waiting stage");
-	System.out.println("Player done: " + playerIndex);
 	if (currentRound.isAllWaitingsChecked()) {
 	    currentRound.setWaitingStage(false);
-	    System.out.println("All players done, exiting waiting phase");
 	    waitingStageOver();
 	}
     }

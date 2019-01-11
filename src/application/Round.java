@@ -179,6 +179,11 @@ public class Round {
 	clientPackage.setWaitingPhase(isWaitingStage);
 	clientPackage.setEnemyCards(enemyCards);
 	clientPackage.setDealerNumber(dealer);
+	if(isWaitingStage) {
+	    clientPackage.setMinorRoundWinner(minorRound.winner());
+	} else {
+	    clientPackage.setMinorRoundWinner(-1);
+	}
 	if(roundNumber < 3*numberOfPlayers + 12) {
 	    clientPackage.setWinners(null);
 	} else {
