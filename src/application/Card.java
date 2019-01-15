@@ -4,6 +4,10 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 
 public class Card extends ImageView {
+    /**
+     * Responsible for storing the card's face-information (number and color)
+     * It's constructor loads it's image depending on those two values
+     * */
 
     private int number;
     private int color;

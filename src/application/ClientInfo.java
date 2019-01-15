@@ -6,11 +6,17 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 public class ClientInfo {
+    /**
+     * Stores information about a Client
+     */
     private Socket connection;
     private ObjectInputStream input;
     private ObjectOutputStream output;
 
     public void close() throws IOException {
+	/**
+	     * Closes the streams and socket
+	     * */
 	input.close();
 	output.close();
 	connection.close();

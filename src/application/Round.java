@@ -6,6 +6,9 @@ import java.util.Random;
 import javafx.util.Pair;
 
 public class Round {
+    /**
+     * Stores information about the match's state
+     */
     private ArrayList<Player> players = new ArrayList<>();
     private MinorRound minorRound = new MinorRound();
 
@@ -48,6 +51,9 @@ public class Round {
     }
 
     public void setScores() {
+	/**
+	 * Sets the players' scores
+	 */
 	for (Player p : players) {
 	    if (p.getPrediction() == p.getWon()) {
 		p.setScore(p.getScore() + 5 + p.getWon());
@@ -80,6 +86,10 @@ public class Round {
     }
 
     public void nextRound() {
+	/**
+	 * Calculates necessary information about the next round and sets the
+	 * appropriate variables
+	 */
 	roundNumber++;
 	if (roundNumber < players.size() || roundNumber >= 12 + 2 * players.size()) {
 	    numberOfCards = 1;
@@ -94,6 +104,9 @@ public class Round {
     }
 
     private void dealCards() {
+	/**
+	 * Deals cards for each player and sets the tromph if necessary
+	 */
 	ArrayList<Card> used = new ArrayList<>();
 	Random random = new Random();
 	random.setSeed(System.currentTimeMillis());
@@ -126,6 +139,9 @@ public class Round {
     }
 
     private boolean isUsed(ArrayList<Card> usedCards, Card card) {
+	/**
+	 * Checks if the card was already dealt
+	 */
 	for (Card c : usedCards) {
 	    if (c.getColor() == card.getColor() && c.getNumber() == card.getNumber()) {
 		return true;
@@ -135,6 +151,9 @@ public class Round {
     }
 
     public ClientPackage createClientPackage(int playerIndex) {
+	/**
+	 * Creates a package that is to be sent to the given player
+	 */
 	ClientPackage clientPackage = new ClientPackage();
 
 	ArrayList<String> playerNames = new ArrayList<>();
@@ -158,8 +177,7 @@ public class Round {
 	    predictions.add(p.getPrediction());
 	    won.add(p.getWon());
 	    for (Card c : p.getCards()) {
-		enemyCards.add(
-			new Pair<Integer, Integer>(c.getNumber(), c.getColor()));
+		enemyCards.add(new Pair<Integer, Integer>(c.getNumber(), c.getColor()));
 	    }
 	}
 	clientPackage.setTromph(
@@ -179,21 +197,24 @@ public class Round {
 	clientPackage.setWaitingPhase(isWaitingStage);
 	clientPackage.setEnemyCards(enemyCards);
 	clientPackage.setDealerNumber(dealer);
-	if(isWaitingStage) {
+	if (isWaitingStage) {
 	    clientPackage.setMinorRoundWinner(minorRound.winner());
 	} else {
 	    clientPackage.setMinorRoundWinner(-1);
 	}
-	if(roundNumber < 3*numberOfPlayers + 12) {
+	if (roundNumber < 3 * numberOfPlayers + 12) {
 	    clientPackage.setWinners(null);
 	} else {
 	    clientPackage.setWinners(getWinners());
 	}
-	
+
 	return clientPackage;
     }
 
     public boolean isAllWaitingsChecked() {
+	/**
+	 * Checks if there are players in Waiting Stage
+	 */
 	for (Player p : players) {
 	    if (!p.isWaitingChecked()) {
 		return false;
@@ -201,17 +222,20 @@ public class Round {
 	}
 	return true;
     }
-    
-    public ArrayList<String> getWinners(){
+
+    public ArrayList<String> getWinners() {
+	/**
+	 * Calculates the winner(s) of the match
+	 */
 	ArrayList<String> winners = new ArrayList<>();
 	int max = -Integer.MIN_VALUE;
-	for(Player p : players) {
-	    if(p.getScore() == 0 && max != 0) {
+	for (Player p : players) {
+	    if (p.getScore() == 0 && max != 0) {
 		max = 0;
 		winners.add(p.getName());
-	    } else if(p.getScore() == max) {
+	    } else if (p.getScore() == max) {
 		winners.add(p.getName());
-	    } else if(p.getScore() > max && max != 0) {
+	    } else if (p.getScore() > max && max != 0) {
 		winners.add(p.getName());
 		max = p.getScore();
 	    }

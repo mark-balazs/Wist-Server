@@ -3,6 +3,9 @@ package application;
 import java.util.ArrayList;
 
 public class Player {
+    /**
+     * Stores information about a player
+     */
     private ArrayList<Card> cards = new ArrayList<>();
     private String name;
     private int playerIndex;
@@ -85,6 +88,9 @@ public class Player {
     }
 
     public boolean hasColor(int color) {
+	/**
+	 * Checks if the player has the specified color in it's hand
+	 */
 	for (Card c : cards) {
 	    if (c.getColor() == color) {
 		return true;

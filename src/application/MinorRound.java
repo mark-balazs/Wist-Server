@@ -5,6 +5,10 @@ import java.util.ArrayList;
 import javafx.util.Pair;
 
 public class MinorRound {
+    /**
+     * Stores information about the minor rounds
+     * Minor rounds are the phases while every client picks a card
+     * */
     private ArrayList<Pair<Player, Card>> playedCards = new ArrayList<>();
     private int firstCardColor;
     private Card tromph = new Card(0,0);
@@ -42,6 +46,9 @@ public class MinorRound {
     }
 
     public int winner() {
+	/**
+	     * Calculates the index of the minor round's winner
+	     * */
 	Pair<Player, Card> winner = playedCards.get(0);
 	for (Pair<Player, Card> p : playedCards) {
 	    if (p.getValue().getColor() == tromph.getColor() && winner.getValue().getColor() != tromph.getColor()) {

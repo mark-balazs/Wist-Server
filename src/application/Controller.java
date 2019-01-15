@@ -12,6 +12,9 @@ import javafx.stage.Stage;
 import javafx.util.Pair;
 
 public class Controller {
+    /**
+     * Contains the UI's non-server part of the controller
+     */
     @FXML
     protected ListView<String> playersConnectedList;
     @FXML
@@ -28,9 +31,11 @@ public class Controller {
     protected Stage stage;
 
     protected Round currentRound = new Round();
-    // protected Stack<Round> roundRepo = new Stack<>();
 
     protected void alert(String message) {
+	/**
+	 * Creates an alert message box with the given message in it
+	 */
 	Platform.runLater(new Runnable() {
 
 	    @Override
@@ -46,6 +51,9 @@ public class Controller {
     }
 
     protected void nextStep(int currentAnswer) {
+	/**
+	 * Creates a thread that processes client input
+	 */
 	Thread thread = new Thread(new Runnable() {
 
 	    @Override
@@ -62,6 +70,9 @@ public class Controller {
     }
 
     protected void inPredictionPhase(int currentAnswer) {
+	/**
+	 * Processes client input while in Prediction Phase
+	 */
 	currentRound.getPlayers().get(currentRound.getTurn()).setPrediction(currentAnswer);
 	currentRound.setTurn((currentRound.getTurn() + 1) % currentRound.getNumberOfPlayers());
 	currentRound.setTurnCounter((currentRound.getTurnCounter() + 1) % currentRound.getNumberOfPlayers());
@@ -72,6 +83,9 @@ public class Controller {
     }
 
     protected void inPickPhase(int currentAnswer) {
+	/**
+	 * Processes client input while in Pick Phase
+	 */
 	if (currentRound.getMinorRound().getPlayedCards().isEmpty()) {
 	    currentRound.getMinorRound().setFirstCardColor(
 		    currentRound.getPlayers().get(currentRound.getTurn()).getCards().get(currentAnswer).getColor());
@@ -88,6 +102,9 @@ public class Controller {
     }
 
     protected void minorRoundOver() {
+	/**
+	 * Sets the clients into Waiting Stage
+	 */
 	currentRound.setWaitingStage(true);
 	for (Player p : currentRound.getPlayers()) {
 	    p.setWaitingChecked(false);
@@ -95,6 +112,10 @@ public class Controller {
     }
 
     protected void roundOver() {
+	/**
+	 * Sets the scores and starts new round If the match is over, starts a new
+	 * Waiting Stage
+	 */
 	currentRound.setPredictionPhase(true);
 	currentRound.setPickPhase(false);
 	currentRound.setScores();
@@ -107,6 +128,7 @@ public class Controller {
 	    currentRound.setWaitingStage(true);
 	}
     }
+
     public void setStage(Stage stage) {
 	this.stage = stage;
     }

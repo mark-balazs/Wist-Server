@@ -7,6 +7,12 @@ import javafx.util.Pair;
 
 @SuppressWarnings("serial")
 public class ClientPackage implements Serializable {
+    
+    /**
+     * Stores necessary information about the match's current state for the clients
+     * It is the type of the packages that get sent by the server to the clients
+     * */
+    
     private int minorTurn;
     private int turn;
     private ArrayList<String> playerNames;

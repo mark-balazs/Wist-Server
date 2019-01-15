@@ -14,11 +14,20 @@ import java.net.Socket;
 import java.net.SocketException;
 
 public class Server extends Controller {
+    /**
+     * Contains the UI's server part of the controller
+     * */
     protected ServerSocket server;
     protected boolean inGame = false;
 
     @FXML
     private void startServerButtonClicked(MouseEvent me) {
+	/**
+	 * "Start server" button's "Mouse clicked" event handler
+	 * Starts server setup
+	 * Starts connection thread
+	 * Disables the "Start server" button and "Number of players" field
+	 * */
 	if (numberOfPlayersField.getText().matches("[2-6]")) {
 	    setupServer();
 	    currentRound.setDealer(0);
@@ -35,14 +44,19 @@ public class Server extends Controller {
 
     @FXML
     protected void startGameButtonClicked(MouseEvent me) {
+	/**
+	 * "Start game" button's "Mouse clicked" event handler
+	 * Starts first round
+	 * */
 	inGame = true;
 	currentRound.nextRound();
-	SelectionModel<Tab> selectionModel = tabPane.getSelectionModel();
-	tabPane.getTabs().get(0).setDisable(true);
-	selectionModel.select(1);
     }
 
     private void setupServer() {
+	/**
+	 * Starts the serversocket
+	 * sets the numberOfPlayers variable's value
+	 * */
 	try {
 	    server = new ServerSocket(4444, 5);
 	} catch (IOException e) {
@@ -53,6 +67,9 @@ public class Server extends Controller {
     }
 
     private void waitForConnections() {
+	/**
+	 * Starts a thread which is responsible for accepting the clients' requests
+	 * */
 	Thread thread = new Thread(new Runnable() {
 
 	    @Override
@@ -75,6 +92,10 @@ public class Server extends Controller {
     }
 
     private void setupStreams(final Socket connection, final int index) {
+	/**
+	 * Sets up the input and output streams from the given connection
+	 * Creates a new Player object with, sets up it's ClientInfo
+	 * */
 	Platform.runLater(new Runnable() {
 	    @Override
 	    public void run() {
@@ -103,6 +124,11 @@ public class Server extends Controller {
     }
 
     private void createClientOutputThread(Player player, int playerIndex) {
+	/**
+	 * Creates a thread wich is responsible for sending out packages for the
+	 * Client specified by the parameters
+	 * It sends packages twice per second
+	 * */
 	Thread thread = new Thread(new Runnable() {
 
 	    @Override
@@ -136,6 +162,9 @@ public class Server extends Controller {
     }
 
     private void createClientInputThread(Player player, int playerIndex) {
+	/**
+	 * Creates a thread which is responsible for continuously reading the clients' inputs
+	 * */
 	Thread thread = new Thread(new Runnable() {
 
 	    @Override
@@ -161,8 +190,6 @@ public class Server extends Controller {
 		    classNotFoundException.printStackTrace();
 		} catch (IOException ioException) {
 		    ioException.printStackTrace();
-		} catch (Exception e) {
-		    
 		} finally {
 		    closeServer();
 		}
@@ -173,6 +200,9 @@ public class Server extends Controller {
     }
 
     protected void processPickPhaseInput(Player player, int answer) {
+	/**
+	 * If the client input happened during Pick Phase, checks the validity of the answer
+	 * */
 	if (currentRound.getTurnCounter() != 0) {
 	    if (player.hasColor(currentRound.getMinorRound().getFirstCardColor())
 		    && player.getCards().get(answer).getColor() != currentRound.getMinorRound().getFirstCardColor()) {
@@ -190,10 +220,16 @@ public class Server extends Controller {
     }
 
     protected void processPredictionPhaseInput(Player player, int answer) {
+	/**
+	 * If the client input happened during Prediction Phase
+	 * */
 	nextStep(answer);
     }
 
     public void closeServer() {
+	/**
+	 * Closes the connections and streams from the server side and then closes the server itself
+	 * */
 	try {
 	    for (Player p : currentRound.getPlayers()) {
 		p.getClientInfo().close();
@@ -205,6 +241,9 @@ public class Server extends Controller {
     }
 
     protected void waitingStageOver() {
+	/**
+	 * If the match is not over, it sets the next minor round's variables, otherwise it closes the server
+	 * */
 	if (currentRound.getRoundNumber() < 3 * currentRound.getNumberOfPlayers() + 12) {
 	    currentRound.getPlayers().get(currentRound.getMinorRound().winner())
 		    .setWon(currentRound.getPlayers().get(currentRound.getMinorRound().winner()).getWon() + 1);
@@ -222,6 +261,9 @@ public class Server extends Controller {
     }
 
     protected void inWaitingStage(int playerIndex) {
+	/**
+	 * Processes client input during Waiting Stage
+	 * */
 	currentRound.getPlayers().get(playerIndex).setWaitingChecked(true);
 	if (currentRound.isAllWaitingsChecked()) {
 	    currentRound.setWaitingStage(false);
@@ -231,6 +273,10 @@ public class Server extends Controller {
 
     @FXML
     protected void cancelGameButtonClicked(MouseEvent me) {
+	/**
+	 * "Cancel game" button's "Mouse Clicked" event handler
+	 * Closes the connection, server and the window
+	 * */
 	closeServer();
 	stage.close();
     }
